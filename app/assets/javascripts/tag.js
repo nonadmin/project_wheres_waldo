@@ -26,8 +26,11 @@ WALDO.Tag = (function($){
   };
 
   newTag = function(location){
+    // set tag location relative to container's offset
+    // so we can change DOM layout without updating tagging code 
     location.top -= $('.container').offset().top + 50;
     location.left -= $('.container').offset().left + 50;
+    console.log(location);
     var tag = $('<div/>').addClass('tag active')
                          .offset(location)
                          .append( _charactersList );
