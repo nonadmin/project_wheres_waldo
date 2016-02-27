@@ -1,0 +1,44 @@
+// Place all the styles related to the images controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+.container {
+  position: relative;
+  img {
+
+  }
+}
+
+.tag {
+  width: 100px;
+  min-height: 100px;
+  position: absolute;
+  // top: 0px;
+  // left: 0px;
+}
+
+.active {
+  border: 4px solid #ff0;
+  ul {
+    background-color: #ff0; 
+    border: 4px solid #ff0;
+  }
+}
+
+.set {
+  border: 4px solid #0f3;
+  ul {
+    background-color: #0f3; 
+    border: 4px solid #0f3;
+  }
+}
+
+.characters {
+  position: relative;
+  top: 100px;
+  left: -4px;
+  width: 100px;
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
+}
