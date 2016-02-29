@@ -1,9 +1,9 @@
 var WALDO = WALDO || {};
 
 
-WALDO.Tag = (function($){
+WALDO.Tag = (function($, Characters, Game){
 
-  var _activeTag;
+  var _activeTagLocation;
   var _charactersList;
 
   init = function(){
@@ -15,7 +15,8 @@ WALDO.Tag = (function($){
       if ( $('.active').length ){
         $('.active').remove();
       } else {
-        newTag({top: e.pageY, left: e.pageX});
+        _activeTagLocation = {top: e.pageY, left: e.pageX};
+        _activeTag({top: e.pageY, left: e.pageX});
       }
     });
 
@@ -23,52 +24,94 @@ WALDO.Tag = (function($){
       e.stopImmediatePropagation();
       _tryTagging( $(e.target) );
     });
+
+    $('.container').on('click', '.close', function(e){
+      e.stopImmediatePropagation();
+      _removeTag( $(e.target) );
+    });
   };
 
-  newTag = function(location){
+  savedTag = function(location, character, tag_id){
+    var tag = _div(location);
+    tag.addClass('set').append(
+      '<ul class="characters"><li>'+ character + '</li></ul>'
+    ).append(
+      '<div data-id="' + tag_id + '" class="close">x</div>'
+    ).attr({'data-id': tag_id});
+    $('.container').append(tag);
+  };
+
+  _activeTag = function(location){
+    var tag = _div(location);
+    tag.addClass('active').append(_charactersList);
+    $('.container').append(tag);
+  };
+
+  _div = function(location){
     // set tag location relative to container's offset
     // so we can change DOM layout without updating tagging code 
     location.top -= $('.container').offset().top + 50;
     location.left -= $('.container').offset().left + 50;
-    console.log(location);
-    var tag = $('<div/>').addClass('tag active')
-                         .offset(location)
-                         .append( _charactersList );
-    $('.container').append(tag);
-    _activeTag = tag;
+    return $('<div/>').addClass('tag').offset(location);
   };
 
   _buildCharactersList = function(){
-    var characters = {1: 'Waldo', 2: 'Wenda', 3: 'Odlaw', 
-                      4: 'Wizard Whitebeard', 5: 'Woof'};
     _charactersList = $('<ul/>').addClass('characters');
-    $.each(Object.keys(characters), function(i, id){
+
+    $.each(Characters.list(), function(i, character){
       _charactersList.append( 
-        $('<li/>', {'data-character': id}).text(characters[id]) 
+        $('<li/>', {'data-id': character.id}).text(character.name)
       );
     });
   };
 
   _tryTagging = function($character){
-    if ( _characterFound($character) ){
-      _activeTag.removeClass('active').addClass('set');
-      $character.siblings().remove();
-      _buildCharactersList();
-    }
+    _saveTag($character).done(function(tag){      
+      savedTag(_activeTagLocation, tag.character.name, tag.id);
+      $('.active').remove();
+      Game.gameOver(tag.game["all_tags_found?"]);
+    }).fail(function(){
+      $('.active').fadeOut(150).fadeIn(150).fadeOut(150).fadeIn(150).fadeOut(150, function(e){
+        $(this).remove();
+      });
+    });
   };
 
+  _saveTag = function($character){
+    var tagData = JSON.stringify({
+      game_id: $('.container').data('game-id'),
+      character_id: $character.data('id'),
+      pos_x: _activeTagLocation.left,
+      pos_y: _activeTagLocation.top
+    });
 
-  _characterFound = function(){
-    return true;
+    return $.ajax({
+      method: 'POST',
+      url: Routes.tags_path({format: 'json'}),
+      data: tagData,
+      contentType: "application/json",
+      dataType: "json"
+    });
+  };
+
+  _removeTag = function($tag){
+    var tag_id = $tag.data('id');
+
+    $.ajax({
+      method: 'DELETE',
+      url: Routes.tag_path(tag_id, {format: 'json'})
+    }).done(function(){
+      $('[data-id=' + tag_id + ']').remove();
+    });
   };
 
   return {
-    newTag: newTag,
+    savedTag: savedTag,
     events: events,
     init: init
   };
 
-})($);
+})($, WALDO.Characters, WALDO.Game);
 
 
 $( document ).ready(function(){
@@ -76,5 +119,8 @@ $( document ).ready(function(){
 });
 
 $( document ).on('page:change', function(){
-  WALDO.Tag.init();
+  WALDO.Characters.init().done(function(){
+    WALDO.Tag.init();
+  });
+  
 });

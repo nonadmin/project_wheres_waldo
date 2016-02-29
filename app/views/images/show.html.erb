@@ -1,3 +1,13 @@
-<div class="container">  
-  <%= image_tag @image.src %>
+<div class="main">
+  <div class="container" data-game-id="<%= @game.id %>">  
+    <%= image_tag @image.src %>
+  </div>
+
+  <div class="time-remaining">Time-remaining: <span></span></div>
+  
+  <div class="highscore" data-hs-id="<%= @highscore.id %>">
+    Highscore: <span id="score"><%= @highscore.score %></span> 
+    by: <span id="player"><%= @highscore.player %></span>
+  </div>
+
 </div>

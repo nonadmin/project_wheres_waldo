@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
 
+  resources :characters, only: [:index]
+  resources :tags, only: [:create, :destroy]
   resources :images, only: [:show]
+  resources :highscores, only: [:update]
+
 
 
   # The priority is based upon order of creation: first created -> highest priority.

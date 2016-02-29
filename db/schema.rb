@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160227213039) do
+ActiveRecord::Schema.define(version: 20160229230210) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -31,6 +31,20 @@ ActiveRecord::Schema.define(version: 20160227213039) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "games", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer  "image_id"
+  end
+
+  create_table "highscores", force: :cascade do |t|
+    t.string   "player",     default: "Waldough"
+    t.integer  "score",      default: 0
+    t.integer  "image_id"
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+  end
+
   create_table "images", force: :cascade do |t|
     t.string   "src"
     t.datetime "created_at", null: false
@@ -39,11 +53,13 @@ ActiveRecord::Schema.define(version: 20160227213039) do
 
   create_table "tags", force: :cascade do |t|
     t.integer  "character_id"
-    t.integer  "image_id"
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
     t.integer  "pos_x"
     t.integer  "pos_y"
+    t.integer  "game_id"
   end
+
+  add_index "tags", ["character_id", "game_id"], name: "index_tags_on_character_id_and_game_id", unique: true, using: :btree
 
 end
