@@ -14,4 +14,6 @@
 //= require jquery_ujs
 //= require turbolinks
 //= require js-routes
-//= require_tree .
+//= require model.js
+//= require view.js
+//= require game.js

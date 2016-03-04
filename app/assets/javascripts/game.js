@@ -1,78 +1,85 @@
 var WALDO = WALDO || {};
 
 
-WALDO.Game = (function($){
+WALDO.Game = (function($, Model, View){
 
-  var _score = 90;
-  var _highScore;
   var _timerID;
 
-  init = function(){
-    _startTimer();
-    _highScore = parseInt( $('#score').text() );
-    $('.time-remaining span').text(_score);
+  var init = function(){
+    _timer();
   };
 
-  events = function(){
-
-  };
-
-  gameOver = function(all_tags_found){
+  var _gameOver = function(all_tags_found){
     if (all_tags_found){
       clearInterval(_timerID);
       _checkHighScore();
     }
   };
 
-  _startTimer = function(){
+  var newActiveTag = function(location){
+    Model.newActiveTag(location);
+  };
+
+  var tryTagging = function(characterID){
+    Model.saveTag(characterID)
+         .done(function(tag){
+            // tag worked, is valid
+            View.addSavedTag( {top: tag.pos_y, left: tag.pos_x}, 
+                              tag.character.name, tag.id );
+            _gameOver( tag.game["all_tags_found?"] ); })
+         
+         .fail(function(){
+            // tag is invalid
+            View.failedTagging();
+
+      });
+  };
+
+  var removeTag = function(tagID){
+    Model.removeTag(tagID).done(function(){
+      View.removeTag(tagID);
+    });
+  };
+
+  var _timer = function(){
     _timerID = setInterval(function(){
-      if (_score > 0){
-        _score -= 1;
-        $('.time-remaining span').text(_score);
-      }
+      Model.incrementScore();
+      View.updateScore( Model.getCurrentScore() );
     }, 1000);
   };
 
-  _checkHighScore = function(){
-    if (_score > _highScore){
+  var _checkHighScore = function(){
+    if ( Model.newHighScore() ){
 
-      var id = $('.highscore').data("hs-id");
-      var highscoreData = JSON.stringify({
-        player: prompt("Congratulations, new highscore!  What's your name?"),
-        score: _score
-      });
-
-      $.ajax({
-        method: 'PATCH',
-        url: Routes.highscore_path(id, {format: 'json'}),
-        data: highscoreData,
-        contentType: "application/json",
-        dataType: "json"
-      }).done(function(hs){
-        $("#player").text(hs.player);
-        $("#score").text(hs.score);
+      var player = prompt("Congratulations, new highscore!  What's your name?");
+      Model.updateHighScore( player ).done(function(hs){
+        View.updateHighScore(hs.score, hs.player);
       });
 
     } else {
 
       alert("You found everyone, but didn't get a new highscore :( Refresh to play again!");
     }
-    
   };
 
   return {
-    events: events,
     init: init,
-    gameOver: gameOver
+    newActiveTag: newActiveTag,
+    tryTagging: tryTagging,
+    removeTag: removeTag
   };
 
-})($);
+})($, WALDO.Model, WALDO.View);
 
 
 $( document ).ready(function(){
-  WALDO.Game.events();
+  WALDO.View.events();
 });
 
 $( document ).on('page:change', function(){
+  WALDO.Model.init();
   WALDO.Game.init();
+  WALDO.Model.getCharacters().done(function(characters){
+      WALDO.View.init(characters);
+    });
 });
